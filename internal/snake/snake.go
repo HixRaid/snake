@@ -25,7 +25,7 @@ type Snake struct {
 	Mode      SnakeMode
 	Direction [2]float32
 	FieldSize [2]float32
-	Tail      *tail
+	tail      *tail
 	stop      chan bool
 	mu        sync.RWMutex
 }
@@ -35,7 +35,7 @@ func NewSnake(fieldSize [2]float32, pos, dir [2]float32, len int) *Snake {
 		Mode:      Pause,
 		Direction: dir,
 		FieldSize: fieldSize,
-		Tail:      newTail(pos, dir, len),
+		tail:      newTail(pos, dir, len),
 	}
 }
 
@@ -70,52 +70,57 @@ func (s *Snake) SetMode(mode SnakeMode) {
 func (s *Snake) Move() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.Tail.move(s.Direction, s.FieldSize)
+	s.tail.move(s.Direction, s.FieldSize)
 
 }
 
 func (s *Snake) Draw(screen *ebiten.Image) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	for i, v := range s.Tail.Length {
-		if i > 0 {
-			vector.DrawFilledRect(screen, v[0], v[1], 1, 1, tailColor, false)
-		} else {
+
+	for i, v := range s.tail.length {
+		if s.tail.headIndex == i {
 			vector.DrawFilledRect(screen, v[0], v[1], 1, 1, headColor, false)
+		} else {
+			vector.DrawFilledRect(screen, v[0], v[1], 1, 1, tailColor, false)
 		}
 	}
 }
 
 type tail struct {
-	Length [][2]float32
+	length    [][2]float32
+	headIndex int
 }
 
 func newTail(pos, dir [2]float32, len int) *tail {
 	t := tail{
-		Length: make([][2]float32, len),
+		length: make([][2]float32, len),
 	}
 
 	for i := 0; i < len; i++ {
-		t.Length[i][0], t.Length[i][1] = pos[0]-dir[0]*float32(i), pos[1]-dir[1]*float32(i)
+		t.length[i][0], t.length[i][1] = pos[0]-dir[0]*float32(i), pos[1]-dir[1]*float32(i)
 	}
 
 	return &t
 }
 
 func (t *tail) move(dir [2]float32, fieldSize [2]float32) {
-	for i := len(t.Length) - 1; i > 0; i-- {
-		t.Length[i][0], t.Length[i][1] = t.Length[i-1][0], t.Length[i-1][1]
+	targetHeadIndex := t.headIndex - 1
+	if targetHeadIndex < 0 {
+		targetHeadIndex = len(t.length) - 1
 	}
 
-	t.Length[0][0], t.Length[0][1] = t.Length[0][0]+dir[0], t.Length[0][1]+dir[1]
+	t.length[targetHeadIndex][0], t.length[targetHeadIndex][1] = t.length[t.headIndex][0]+dir[0], t.length[t.headIndex][1]+dir[1]
+	t.headIndex = targetHeadIndex
+
 	switch {
-	case t.Length[0][0] > fieldSize[0]-1:
-		t.Length[0][0] = 0
-	case t.Length[0][0] < 0:
-		t.Length[0][0] = fieldSize[0] - 1
-	case t.Length[0][1] > fieldSize[1]-1:
-		t.Length[0][1] = 0
-	case t.Length[0][1] < 0:
-		t.Length[0][1] = fieldSize[1] - 1
+	case t.length[targetHeadIndex][0] > fieldSize[0]-1:
+		t.length[targetHeadIndex][0] = 0
+	case t.length[targetHeadIndex][0] < 0:
+		t.length[targetHeadIndex][0] = fieldSize[0] - 1
+	case t.length[targetHeadIndex][1] > fieldSize[1]-1:
+		t.length[targetHeadIndex][1] = 0
+	case t.length[targetHeadIndex][1] < 0:
+		t.length[targetHeadIndex][1] = fieldSize[1] - 1
 	}
 }

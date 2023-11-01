@@ -24,10 +24,10 @@ type Game struct {
 }
 
 func (g *Game) Update() error {
-	g.Direction = input.GetDirection(g.Direction)
-
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		g.SetMode(!g.Mode)
+	} else {
+		g.Direction = input.GetDirection(g.Direction)
 	}
 	return nil
 }

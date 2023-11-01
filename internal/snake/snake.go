@@ -71,5 +71,4 @@ func (t *tail) move(dir [2]float32, fieldSize [2]float32) {
 	case t.Length[0][1] < 0:
 		t.Length[0][1] = fieldSize[1] - 1
 	}
-	// fmt.Println(t.Length[0][0], t.Length[0][1])
 }

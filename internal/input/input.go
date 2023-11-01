@@ -1,8 +1,6 @@
 package input
 
 import (
-	"fmt"
-	"log/slog"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -13,8 +11,6 @@ func GetDirection(cur [2]float32) (result [2]float32) {
 	if (result[0] != 0 || result[1] != 0) &&
 		result[0]+cur[0] != 0 && result[1]+cur[1] != 0 &&
 		math.Abs(float64(result[0])) != math.Abs(float64(result[1])) {
-
-		slog.Info(fmt.Sprintf("Changed direction (X: %.0f Y: %.0f)", result[0], result[1]))
 		return
 	}
 	return cur

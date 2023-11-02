@@ -16,6 +16,13 @@ const (
 	Play  SnakeMode = true
 )
 
+type SnakeStatus bool
+
+const (
+	Dead SnakeStatus = false
+	Live SnakeStatus = true
+)
+
 var (
 	headColor = color.RGBA{255, 63, 0, 255}
 	tailColor = color.RGBA{63, 255, 0, 255}
@@ -23,55 +30,64 @@ var (
 
 type Snake struct {
 	Mode      SnakeMode
+	Status    SnakeStatus
 	Direction [2]float32
-	FieldSize [2]float32
 	tail      *tail
-	stop      chan bool
+	pause     chan bool
+	dead      chan bool
 	mu        sync.RWMutex
 }
 
 func NewSnake(fieldSize [2]float32, pos, dir [2]float32, len int) *Snake {
 	return &Snake{
 		Mode:      Pause,
+		Status:    Live,
 		Direction: dir,
-		FieldSize: fieldSize,
-		tail:      newTail(pos, dir, len),
+		tail:      newTail(fieldSize, pos, dir, len),
+		dead:      make(chan bool, 1),
 	}
 }
 
 func (s *Snake) SetMode(mode SnakeMode) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.Mode == mode {
+
+	if s.Mode == mode || s.Status == Dead {
 		return
 	}
+
 	s.Mode = mode
 
 	switch s.Mode {
 	case Play:
-		s.stop = make(chan bool)
+		s.pause = make(chan bool)
 		ticker := time.NewTicker(time.Second / 10)
 		go func() {
 			for {
 				select {
 				case <-ticker.C:
 					s.Move()
-				case <-s.stop:
-					close(s.stop)
+				case <-s.pause:
+					return
+				case <-s.dead:
+					s.Mode = Pause
 					return
 				}
 			}
 		}()
 	case Pause:
-		s.stop <- true
+		s.pause <- true
 	}
 }
 
 func (s *Snake) Move() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.tail.move(s.Direction, s.FieldSize)
 
+	if s.tail.move(s.Direction) == Dead {
+		s.Status = Dead
+		s.dead <- true
+	}
 }
 
 func (s *Snake) Draw(screen *ebiten.Image) {
@@ -89,12 +105,14 @@ func (s *Snake) Draw(screen *ebiten.Image) {
 
 type tail struct {
 	length    [][2]float32
+	fieldSize [2]float32
 	headIndex int
 }
 
-func newTail(pos, dir [2]float32, len int) *tail {
+func newTail(fieldSize, pos, dir [2]float32, len int) *tail {
 	t := tail{
-		length: make([][2]float32, len),
+		length:    make([][2]float32, len),
+		fieldSize: fieldSize,
 	}
 
 	for i := 0; i < len; i++ {
@@ -104,7 +122,7 @@ func newTail(pos, dir [2]float32, len int) *tail {
 	return &t
 }
 
-func (t *tail) move(dir [2]float32, fieldSize [2]float32) {
+func (t *tail) move(dir [2]float32) SnakeStatus {
 	targetHeadIndex := t.headIndex - 1
 	if targetHeadIndex < 0 {
 		targetHeadIndex = len(t.length) - 1
@@ -114,13 +132,21 @@ func (t *tail) move(dir [2]float32, fieldSize [2]float32) {
 	t.headIndex = targetHeadIndex
 
 	switch {
-	case t.length[targetHeadIndex][0] > fieldSize[0]-1:
+	case t.length[targetHeadIndex][0] > t.fieldSize[0]-1:
 		t.length[targetHeadIndex][0] = 0
 	case t.length[targetHeadIndex][0] < 0:
-		t.length[targetHeadIndex][0] = fieldSize[0] - 1
-	case t.length[targetHeadIndex][1] > fieldSize[1]-1:
+		t.length[targetHeadIndex][0] = t.fieldSize[0] - 1
+	case t.length[targetHeadIndex][1] > t.fieldSize[1]-1:
 		t.length[targetHeadIndex][1] = 0
 	case t.length[targetHeadIndex][1] < 0:
-		t.length[targetHeadIndex][1] = fieldSize[1] - 1
+		t.length[targetHeadIndex][1] = t.fieldSize[1] - 1
 	}
+
+	for i, v := range t.length {
+		if v == t.length[t.headIndex] && i != t.headIndex {
+			return Dead
+		}
+	}
+
+	return Live
 }

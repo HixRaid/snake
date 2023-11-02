@@ -25,10 +25,14 @@ type Game struct {
 
 func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		if g.Snake.Status == snake.Dead {
+			g.Snake = snake.NewSnake(fieldSize, [2]float32{20, 10}, [2]float32{1, 0}, 8)
+		}
 		g.SetMode(!g.Mode)
 	} else {
 		g.Direction = input.GetDirection(g.Direction)
 	}
+
 	return nil
 }
 

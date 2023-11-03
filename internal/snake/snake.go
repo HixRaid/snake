@@ -24,8 +24,8 @@ const (
 )
 
 var (
-	headColor = color.RGBA{255, 63, 0, 255}
-	tailColor = color.RGBA{63, 255, 0, 255}
+	headColor = color.RGBA{32, 255, 32, 255}
+	tailColor = color.RGBA{64, 196, 64, 255}
 )
 
 type Snake struct {

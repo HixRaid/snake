@@ -1,11 +1,13 @@
 package main
 
 import (
+	"image/color"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hixraid/snake/internal/apple"
 	"github.com/hixraid/snake/internal/input"
 	"github.com/hixraid/snake/internal/snake"
 )
@@ -17,31 +19,39 @@ const (
 	tps         = 30
 )
 
+var backgroundColor = color.RGBA{16, 16, 16, 255}
 var fieldSize = [2]float32{float32(fieldWidth), float32(fieldHeight)}
 
 type Game struct {
-	*snake.Snake
+	snake *snake.Snake
+	apple *apple.Apple
 }
 
 func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		if g.Snake.Status == snake.Dead {
-			g.Snake = snake.NewSnake(fieldSize, [2]float32{20, 10}, [2]float32{1, 0}, 8)
+		if g.snake.Status == snake.Dead {
+			g.snake = snake.NewSnake(fieldSize, [2]float32{20, 10}, [2]float32{1, 0}, 8)
 		}
-		g.SetMode(!g.Mode)
+		g.snake.SetMode(!g.snake.Mode)
 	} else {
-		g.Direction = input.GetDirection(g.Direction)
+		g.snake.Direction = input.GetDirection(g.snake.Direction)
 	}
 
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	switch g.Mode {
+	screen.Fill(backgroundColor)
+	switch g.snake.Mode {
 	case snake.Play:
-		g.Snake.Draw(screen)
+		g.snake.Draw(screen)
+		g.apple.Draw(screen)
 	case snake.Pause:
-		ebitenutil.DebugPrint(screen, "Pause")
+		if g.snake.Status == snake.Live {
+			ebitenutil.DebugPrint(screen, "ESC\nPause")
+		} else {
+			ebitenutil.DebugPrint(screen, "Dead\n8")
+		}
 	}
 }
 
@@ -55,7 +65,8 @@ func main() {
 	ebiten.SetTPS(tps)
 
 	game := Game{
-		Snake: snake.NewSnake(fieldSize, [2]float32{20, 10}, [2]float32{1, 0}, 8),
+		snake: snake.NewSnake(fieldSize, [2]float32{20, 10}, [2]float32{1, 0}, 8),
+		apple: apple.NewApple([2]float32{30, 30}),
 	}
 
 	if err := ebiten.RunGame(&game); err != nil {

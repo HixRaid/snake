@@ -19,8 +19,10 @@ const (
 	tps         = 30
 )
 
-var backgroundColor = color.RGBA{16, 16, 16, 255}
-var fieldSize = [2]float32{float32(fieldWidth), float32(fieldHeight)}
+var (
+	backgroundColor = color.RGBA{16, 16, 16, 255}
+	fieldSize       = [2]float32{float32(fieldWidth), float32(fieldHeight)}
+)
 
 type Game struct {
 	snake *snake.Snake
@@ -29,10 +31,10 @@ type Game struct {
 
 func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		if g.snake.Status == snake.Dead {
+		if g.snake.GetStatus() == snake.Dead {
 			g.snake = snake.NewSnake(fieldSize, [2]float32{20, 10}, [2]float32{1, 0}, 8)
 		}
-		g.snake.SetMode(!g.snake.Mode)
+		g.snake.SetMode(!g.snake.GetMode())
 	} else {
 		g.snake.Direction = input.GetDirection(g.snake.Direction)
 	}
@@ -42,12 +44,12 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(backgroundColor)
-	switch g.snake.Mode {
+	switch g.snake.GetMode() {
 	case snake.Play:
 		g.snake.Draw(screen)
 		g.apple.Draw(screen)
 	case snake.Pause:
-		if g.snake.Status == snake.Live {
+		if g.snake.GetStatus() == snake.Live {
 			ebitenutil.DebugPrint(screen, "ESC\nPause")
 		} else {
 			ebitenutil.DebugPrint(screen, "Dead\n8")

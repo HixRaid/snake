@@ -30,11 +30,11 @@ type Snake struct {
 	mu        sync.RWMutex
 }
 
-func NewSnake(fieldSize [2]float32, pos, dir [2]float32, len int) *Snake {
+func NewSnake(tailMove []TailMove, pos, dir [2]float32, len int) *Snake {
 	return &Snake{
 		Direction: dir,
 		mode:      Pause,
-		tail:      newTail(fieldSize, pos, dir, len),
+		tail:      newTail(append(tailMove, checkCollision), pos, dir, len),
 		dead:      make(chan bool, 1),
 	}
 }
@@ -100,4 +100,13 @@ func (s *Snake) GetStatus() TailStatus {
 
 func (s *Snake) GetMode() SnakeMode {
 	return s.mode
+}
+
+func checkCollision(length *[][2]float32, headIndex int) TailStatus {
+	for i, v := range *length {
+		if v == (*length)[headIndex] && i != headIndex {
+			return Dead
+		}
+	}
+	return Live
 }

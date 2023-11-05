@@ -1,5 +1,7 @@
 package snake
 
+type TailMove func(length *[][2]float32, headIndex int) (status TailStatus)
+
 type TailStatus bool
 
 const (
@@ -9,16 +11,16 @@ const (
 
 type tail struct {
 	length    [][2]float32
-	fieldSize [2]float32
 	headIndex int
 	status    TailStatus
+	tailMove  []TailMove
 }
 
-func newTail(fieldSize, pos, dir [2]float32, len int) *tail {
+func newTail(tailMove []TailMove, pos, dir [2]float32, len int) *tail {
 	t := tail{
-		length:    make([][2]float32, len),
-		fieldSize: fieldSize,
-		status:    Live,
+		length:   make([][2]float32, len),
+		status:   Live,
+		tailMove: tailMove,
 	}
 
 	for i := 0; i < len; i++ {
@@ -37,19 +39,8 @@ func (t *tail) move(dir [2]float32) TailStatus {
 	t.length[targetHeadIndex][0], t.length[targetHeadIndex][1] = t.length[t.headIndex][0]+dir[0], t.length[t.headIndex][1]+dir[1]
 	t.headIndex = targetHeadIndex
 
-	switch {
-	case t.length[targetHeadIndex][0] > t.fieldSize[0]-1:
-		t.length[targetHeadIndex][0] = 0
-	case t.length[targetHeadIndex][0] < 0:
-		t.length[targetHeadIndex][0] = t.fieldSize[0] - 1
-	case t.length[targetHeadIndex][1] > t.fieldSize[1]-1:
-		t.length[targetHeadIndex][1] = 0
-	case t.length[targetHeadIndex][1] < 0:
-		t.length[targetHeadIndex][1] = t.fieldSize[1] - 1
-	}
-
-	for i, v := range t.length {
-		if v == t.length[t.headIndex] && i != t.headIndex {
+	for _, f := range t.tailMove {
+		if result := f(&t.length, t.headIndex); result == Dead {
 			return Dead
 		}
 	}

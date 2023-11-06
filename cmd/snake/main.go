@@ -32,7 +32,7 @@ type Game struct {
 func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		if g.snake.GetStatus() == snake.Dead {
-			g.SpawnSnake()
+			g.Start()
 		}
 		g.snake.SetMode(!g.snake.GetMode())
 	} else {
@@ -61,8 +61,11 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 	return fieldWidth, fieldHeight
 }
 
-func (g *Game) SpawnSnake() {
-	tailMove := []snake.TailMove{checkFieldBoundaries}
+func (g *Game) Start() {
+	g.apple = apple.New()
+	checkIntersection := g.apple.CheckIntersection([2]int32{int32(fieldWidth), int32(fieldHeight)})
+
+	tailMove := []snake.TailMove{checkFieldBoundaries, checkIntersection}
 	g.snake = snake.NewSnake(tailMove, [2]float32{20, 10}, [2]float32{1, 0}, 8)
 }
 
@@ -86,10 +89,8 @@ func main() {
 	ebiten.SetWindowTitle("Snake")
 	ebiten.SetTPS(tps)
 
-	game := Game{
-		apple: apple.NewApple([2]float32{30, 30}),
-	}
-	game.SpawnSnake()
+	game := Game{}
+	game.Start()
 
 	if err := ebiten.RunGame(&game); err != nil {
 		log.Fatal(err)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 	"log"
 
@@ -52,7 +53,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		if g.snake.GetStatus() == snake.Live {
 			ebitenutil.DebugPrint(screen, "ESC\nPause")
 		} else {
-			ebitenutil.DebugPrint(screen, "Dead\n8")
+			ebitenutil.DebugPrint(screen, fmt.Sprintf("Dead\n%d", g.snake.GetLength()))
 		}
 	}
 }

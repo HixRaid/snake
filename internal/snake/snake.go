@@ -102,6 +102,10 @@ func (s *Snake) GetMode() SnakeMode {
 	return s.mode
 }
 
+func (s *Snake) GetLength() int {
+	return len(s.tail.length)
+}
+
 func checkCollision(length *[][2]float32, headIndex int) TailStatus {
 	for i, v := range *length {
 		if v == (*length)[headIndex] && i != headIndex {

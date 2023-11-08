@@ -2,6 +2,7 @@ package snake
 
 import (
 	"image/color"
+	"math"
 	"sync"
 	"time"
 
@@ -22,7 +23,7 @@ var (
 )
 
 type Snake struct {
-	Direction [2]float32
+	direction [2]float32
 	mode      SnakeMode
 	tail      *tail
 	pause     chan bool
@@ -32,7 +33,7 @@ type Snake struct {
 
 func NewSnake(tailMove []TailMove, pos, dir [2]float32, len int) *Snake {
 	return &Snake{
-		Direction: dir,
+		direction: dir,
 		mode:      Pause,
 		tail:      newTail(append(tailMove, checkCollision), pos, dir, len),
 		dead:      make(chan bool, 1),
@@ -75,7 +76,7 @@ func (s *Snake) Move() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.tail.move(s.Direction) == Dead {
+	if s.tail.move(s.direction) == Dead {
 		s.tail.status = Dead
 		s.dead <- true
 	}
@@ -91,6 +92,14 @@ func (s *Snake) Draw(screen *ebiten.Image) {
 		} else {
 			vector.DrawFilledRect(screen, v[0], v[1], 1, 1, tailColor, false)
 		}
+	}
+}
+
+func (s *Snake) SetDirection(dir [2]float32) {
+	if (dir[0] != 0 || dir[1] != 0) &&
+		dir[0]+s.direction[0] != 0 && dir[1]+s.direction[1] != 0 &&
+		math.Abs(float64(dir[0])) != math.Abs(float64(dir[1])) {
+		s.direction = dir
 	}
 }
 

@@ -37,7 +37,7 @@ func (g *Game) Update() error {
 		}
 		g.snake.SetMode(!g.snake.GetMode())
 	} else {
-		g.snake.Direction = input.GetDirection(g.snake.Direction)
+		g.snake.SetDirection(input.GetDirection())
 	}
 
 	return nil

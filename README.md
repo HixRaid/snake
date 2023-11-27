@@ -2,12 +2,9 @@
 
 Snake is a classic arcade game in which the player needs to control a snake to increase its length, eat food and avoid collisions with walls and its own tail.
 
-> The game is still in development
-
-
 ## 🎯 Goal
 
-The goal of the game is to score the maximum number of points by eating food that appears randomly on the playing field. Every time the snake eats food, it gets longer. However, as she grows, the player must be careful not to run into her tail or the wall, otherwise the game ends.
+The goal of the game is to score the maximum number of points by eating food that randomly appears on the playing field. Every time the snake eats food, it gets longer. However, as she grows, the player must be careful not to run into her tail, otherwise the game will end.
 
 ## 🕹️ Control
 
